@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import sequelize from './config/db.js';
 import User from './models/User.js';
+import checkAdminRole from './middlewares/checkAdminRole.js';
 
 dotenv.config();
 
@@ -13,6 +14,12 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hello, Sequelize with Express!');
+});
+
+app.get('/admin', checkAdminRole, (req, res) => {
+  res.json({
+    message: 'Welcome, admin',
+  });
 });
 
 app.post('/register', async (req, res) => {
