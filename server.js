@@ -68,12 +68,49 @@ app.post('/login', async (req, res) => {
       });
     }
 
+    if (user.mustChangePassword) {
+      return res.json({
+        message: 'You must change your password',
+      });
+    }
+
     res.json({
       message: 'User was logged in successfully',
     });
   } catch (error) {
     res.status(500).json({
       message: 'Error when login user',
+    });
+  }
+});
+
+app.post('/change-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.mustChangePassword = false;
+
+    await user.save();
+
+    res.json({
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error when changing password',
     });
   }
 });
