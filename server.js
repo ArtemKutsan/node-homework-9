@@ -156,6 +156,52 @@ app.post('/delete-account', async (req, res) => {
   }
 });
 
+app.post('/change-email', async (req, res) => {
+  try {
+    const { email, newEmail, currentPassword } = req.body;
+
+    const user = await User.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found',
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        message: 'Current password is incorrect',
+      });
+    }
+
+    const existingUser = await User.findOne({
+      where: { email: newEmail },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'Email is already registered',
+      });
+    }
+
+    user.email = newEmail;
+
+    await user.save();
+
+    res.json({
+      message: 'Email changed successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error when changing email',
+    });
+  }
+});
+
 app.listen(port, async () => {
   try {
     await sequelize.authenticate();
