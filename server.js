@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 import sequelize from './config/db.js';
 import User from './models/User.js';
 
@@ -12,6 +13,37 @@ app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('Hello, Sequelize with Express!');
+});
+
+app.post('/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const existingUser = await User.findOne({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'Email is already registered',
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      message: 'User was registered successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error when registering user',
+    });
+  }
 });
 
 app.listen(port, async () => {
